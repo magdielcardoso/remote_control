@@ -1,0 +1,23 @@
+{
+  "name": "tv-remote-control",
+  "version": "1.0.0",
+  "description": "Controle remoto para Android TV via WiFi",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "android-tv",
+    "remote-control",
+    "wifi"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "androidtv-remote": "^1.0.10",
+    "express": "^4.17.1",
+    "node-arp": "^1.0.6",
+    "socket.io": "^4.4.1"
+  }
+}

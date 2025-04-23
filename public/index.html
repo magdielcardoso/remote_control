@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Remoto TV</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .status {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            background: #e8e8e8;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .apps {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .volume-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #pairing-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .modal-content {
+            text-align: center;
+        }
+
+        input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 200px;
+        }
+
+        .tv-list {
+            margin: 20px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .tv-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .tv-info {
+            flex: 1;
+        }
+
+        .tv-name {
+            font-weight: bold;
+        }
+
+        .tv-ip {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .scan-button {
+            background: #28a745;
+            margin-bottom: 20px;
+        }
+
+        .scan-button:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status" id="status">
+            Desconectado
+        </div>
+
+        <button id="scan-btn" class="scan-button">Procurar TVs na Rede</button>
+        
+        <div id="tv-list" class="tv-list" style="display: none;">
+            <h3>TVs Encontradas:</h3>
+            <div id="tv-list-content"></div>
+        </div>
+
+        <button id="connect-btn" style="display: none;">Conectar à TV</button>
+
+        <h2>Controles Básicos</h2>
+        <div class="controls">
+            <button onclick="sendKey('POWER')">Power</button>
+            <button onclick="sendKey('HOME')">Home</button>
+            <button onclick="sendKey('BACK')">Voltar</button>
+            <button onclick="sendKey('DPAD_UP')">↑</button>
+            <button onclick="sendKey('DPAD_CENTER')">OK</button>
+            <button onclick="sendKey('DPAD_DOWN')">↓</button>
+            <button onclick="sendKey('DPAD_LEFT')">←</button>
+            <button onclick="sendKey('MENU')">Menu</button>
+            <button onclick="sendKey('DPAD_RIGHT')">→</button>
+        </div>
+
+        <h2>Volume</h2>
+        <div class="volume-controls">
+            <button onclick="sendKey('VOLUME_DOWN')">Volume -</button>
+            <button onclick="sendKey('VOLUME_MUTE')">Mudo</button>
+            <button onclick="sendKey('VOLUME_UP')">Volume +</button>
+        </div>
+
+        <h2>Apps</h2>
+        <div class="apps">
+            <button onclick="openApp('https://www.netflix.com')">Netflix</button>
+            <button onclick="openApp('https://www.youtube.com')">YouTube</button>
+            <button onclick="openApp('https://www.primevideo.com')">Prime Video</button>
+            <button onclick="openApp('https://www.disneyplus.com')">Disney+</button>
+        </div>
+    </div>
+
+    <div id="pairing-modal">
+        <div class="modal-content">
+            <h2>Pareamento Necessário</h2>
+            <p>Digite o código exibido na TV:</p>
+            <input type="text" id="pairing-code" maxlength="6">
+            <button onclick="sendPairingCode()">Enviar</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const status = document.getElementById('status');
+        const pairingModal = document.getElementById('pairing-modal');
+        const connectBtn = document.getElementById('connect-btn');
+        const scanBtn = document.getElementById('scan-btn');
+        const tvList = document.getElementById('tv-list');
+        const tvListContent = document.getElementById('tv-list-content');
+        let selectedTvIp = null;
+        let isConnected = false;
+
+        scanBtn.addEventListener('click', () => {
+            status.textContent = 'Procurando TVs na rede...';
+            socket.emit('scan-network');
+        });
+
+        connectBtn.addEventListener('click', () => {
+            if (selectedTvIp) {
+                socket.emit('connect-tv', selectedTvIp);
+            } else {
+                socket.emit('connect-tv');
+            }
+        });
+
+        function sendKey(keyCode) {
+            if (!isConnected) return;
+            socket.emit('send-key', {
+                keyCode: keyCode,
+                direction: 'SHORT'
+            });
+        }
+
+        function openApp(appLink) {
+            if (!isConnected) return;
+            socket.emit('open-app', appLink);
+        }
+
+        function sendPairingCode() {
+            const code = document.getElementById('pairing-code').value;
+            socket.emit('send-pairing-code', code);
+            pairingModal.style.display = 'none';
+        }
+
+        function selectTv(ip) {
+            selectedTvIp = ip;
+            connectBtn.style.display = 'block';
+            status.textContent = `TV selecionada: ${ip}`;
+        }
+
+        socket.on('tvs-found', (tvs) => {
+            if (tvs.length === 0) {
+                status.textContent = 'Nenhuma TV encontrada';
+                return;
+            }
+
+            tvListContent.innerHTML = '';
+            tvs.forEach(tv => {
+                const tvElement = document.createElement('div');
+                tvElement.className = 'tv-item';
+                tvElement.innerHTML = `
+                    <div class="tv-info">
+                        <div class="tv-name">${tv.vendor || 'TV Desconhecida'}</div>
+                        <div class="tv-ip">${tv.ip}</div>
+                    </div>
+                    <button onclick="selectTv('${tv.ip}')">Selecionar</button>
+                `;
+                tvListContent.appendChild(tvElement);
+            });
+
+            tvList.style.display = 'block';
+            status.textContent = `${tvs.length} TV(s) encontrada(s)`;
+        });
+
+        socket.on('pairing-required', () => {
+            pairingModal.style.display = 'block';
+            status.textContent = 'Pareamento necessário';
+        });
+
+        socket.on('tv-connected', (ip) => {
+            isConnected = true;
+            status.textContent = `Conectado à TV (${ip})`;
+            status.style.background = '#d4edda';
+            tvList.style.display = 'none';
+            scanBtn.style.display = 'none';
+        });
+
+        socket.on('tv-power', (powered) => {
+            status.textContent = `TV está ${powered ? 'ligada' : 'desligada'}`;
+        });
+
+        socket.on('tv-volume', (volume) => {
+            status.textContent = `Volume: ${volume.level}/${volume.maximum} | Mudo: ${volume.muted}`;
+        });
+
+        socket.on('tv-app', (app) => {
+            status.textContent = `App atual: ${app}`;
+        });
+
+        socket.on('tv-error', (error) => {
+            status.textContent = `Erro: ${error}`;
+            status.style.background = '#f8d7da';
+        });
+    </script>
+</body>
+</html> 
