@@ -22,7 +22,34 @@ const KeyMap = {
     'VOLUME_DOWN': 25,// KEYCODE_VOLUME_DOWN
     'VOLUME_MUTE': 164,// KEYCODE_VOLUME_MUTE
     'MENU': 82,   // KEYCODE_MENU
-    'ENTER': 66   // KEYCODE_ENTER
+    'ENTER': 66,  // KEYCODE_ENTER
+    // Novas teclas adicionadas
+    'MEDIA_PLAY_PAUSE': 85,  // KEYCODE_MEDIA_PLAY_PAUSE
+    'MEDIA_STOP': 86,        // KEYCODE_MEDIA_STOP
+    'MEDIA_NEXT': 87,        // KEYCODE_MEDIA_NEXT
+    'MEDIA_PREVIOUS': 88,    // KEYCODE_MEDIA_PREVIOUS
+    'MEDIA_REWIND': 89,      // KEYCODE_MEDIA_REWIND
+    'MEDIA_FAST_FORWARD': 90,// KEYCODE_MEDIA_FAST_FORWARD
+    'PAGE_UP': 92,           // KEYCODE_PAGE_UP
+    'PAGE_DOWN': 93,         // KEYCODE_PAGE_DOWN
+    'SEARCH': 84,            // KEYCODE_SEARCH
+    'CHANNEL_UP': 166,       // KEYCODE_CHANNEL_UP
+    'CHANNEL_DOWN': 167,     // KEYCODE_CHANNEL_DOWN
+    'TV_INPUT': 178,         // KEYCODE_TV_INPUT
+    'GUIDE': 172,            // KEYCODE_GUIDE
+    'INFO': 165,             // KEYCODE_INFO
+    'SETTINGS': 176,         // KEYCODE_SETTINGS
+    'CAPTIONS': 175,         // KEYCODE_CAPTIONS
+    'NUM_0': 7,             // KEYCODE_0
+    'NUM_1': 8,             // KEYCODE_1
+    'NUM_2': 9,             // KEYCODE_2
+    'NUM_3': 10,            // KEYCODE_3
+    'NUM_4': 11,            // KEYCODE_4
+    'NUM_5': 12,            // KEYCODE_5
+    'NUM_6': 13,            // KEYCODE_6
+    'NUM_7': 14,            // KEYCODE_7
+    'NUM_8': 15,            // KEYCODE_8
+    'NUM_9': 16             // KEYCODE_9
 };
 
 // Configurações
