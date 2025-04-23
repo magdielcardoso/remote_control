@@ -42,6 +42,77 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Rotas HTTP REST
+app.post('/api/scan', async (req, res) => {
+    try {
+        const tvs = await findTVs();
+        res.json({ success: true, tvs });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/connect', async (req, res) => {
+    try {
+        const { ip } = req.body;
+        await connectToTV(ip);
+        res.json({ success: true, message: 'Conexão iniciada' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/pair', (req, res) => {
+    try {
+        const { code } = req.body;
+        if (!tvRemote) {
+            throw new Error('TV não conectada');
+        }
+        tvRemote.sendCode(code);
+        res.json({ success: true, message: 'Código enviado' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/key', (req, res) => {
+    try {
+        const { keyCode, direction = 'SHORT' } = req.body;
+        if (!tvRemote) {
+            throw new Error('TV não conectada');
+        }
+        
+        const validKeyCode = KeyMap[keyCode];
+        if (!validKeyCode) {
+            throw new Error(`Tecla inválida: ${keyCode}`);
+        }
+
+        const validDirection = direction === 'SHORT' ? 
+            RemoteDirection.SHORT : 
+            direction === 'START_LONG' ? 
+                RemoteDirection.START_LONG : 
+                RemoteDirection.END_LONG;
+
+        tvRemote.sendKey(validKeyCode, validDirection);
+        res.json({ success: true, message: 'Comando enviado' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/app', (req, res) => {
+    try {
+        const { appLink } = req.body;
+        if (!tvRemote) {
+            throw new Error('TV não conectada');
+        }
+        tvRemote.sendAppLink(appLink);
+        res.json({ success: true, message: 'App link enviado' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Função para obter o IP base da rede local
 function getLocalNetworkBase() {
     const interfaces = os.networkInterfaces();
